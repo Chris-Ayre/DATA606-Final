@@ -1,0 +1,171 @@
+---
+title: "Data606-Final-Project"
+author: "Chris Ayre"
+date: "5/12/2019"
+output:
+    prettydoc::html_pretty:
+      theme: architect
+---
+<center>
+![](https://github.com/Chris-Ayre/DS-Final/blob/master/crime1.jpg?raw=true)
+</center>
+
+<center>
+# INTRODUCTION
+</center>
+
+__The Research Question__
+
+Does the Bronx deserve its negative reputation and what types of crime are you likely to encounter in the Bronx?
+
+
+
+__Why do you care?__
+
+I have lived safely in the Bronx for the last 15 years. However, For as long as I can remember, The Bronx has had the reputation of being the premiere trope for urban crime & violence within New York City. However, from my experience the crime is not spread evenly across the borough - I believe the reputation of the Bronx was tarnished in the 1980s and never recovered even though the criminal element is no longer as privalent.I would like to disspell the illusion.
+
+
+__Why should others care?__
+
+In order to dispell the illusion of the Bronx being a crime torn borough everyone needs to know the truth! The Bronx has historically held the reputation of being a hub for violent crime. However in recent years things have drastically changed for the better. 
+
+
+# The Data
+
+```{r}
+# Importing the data
+data <- read.csv("https://raw.githubusercontent.com/Chris-Ayre/DS-Final/master/NYPD_Complaint_Data_2018.csv")
+
+```
+
+```{r message=FALSE,warning=FALSE}
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(treemap)
+```
+
+```{r}
+# Selecting only the Columns I wish to work with from the dataset
+data <- data %>% select(OFNS_DESC, ADDR_PCT_CD, LAW_CAT_CD, CMPLNT_FR_DT, PD_CD, SUSP_AGE_GROUP, SUSP_RACE, SUSP_SEX, VIC_AGE_GROUP, VIC_RACE, VIC_SEX)
+
+# Rename the columns with end user friendly names to to better represent the variables.
+names(data) <- c("Offense", "Precinct", "Category of Offense", "Date Filed", "Crime Code", "Suspect Age", "Suspect Race", "Suspect Sex", "Victim Age", "Victim Race", "Victim Sex")
+```
+
+__Data collection__
+
+This dataset was collected by the New York City Police Department (NYPD), it is comprised of all confirmed valid felony, misdemeanor, and violation crimes reported in the Bronx in 2018. I downloaded the dataset from data.cityofnewyork.us then I organised it in a  useful way so that it was targeted and easier to manage. I do not need all of the data from the data set to explore the types of crimes being reported in the Bronx so specific variables are choosen and renamed to be more descriptive.
+
+__Cases__
+
+There were a total of 101,018 cases. Each case has relevant data on each reported crime such as the Precint reponsible, Level of offense, date/time, location and 30 others.
+
+__Variables__
+
+I will be studying Category and frequency of crime
+Category of offense of the crime that was reported is the explanatory variable. It is categoricical.
+Frequency is the response variable. It is numerical
+
+__Type of study__
+
+This is an observational study - There are no control and experimental groups. Also, I will be analyzing data on events that occurred in 2018 [that i did not affect]
+
+__Scope of inference - generalizability__
+
+The population of interest is the population of the Bronx. The findings from this analysis can be generalized to that population because there was no sampling, instead data was collected from the entire population of the bronx. A potential source of bias that might prevent generalizability is the fact that there are many crimes that are more likely to be reported that others, this dataset is comprised entirely of crime that was reported. Crime is nearly always reported by the victim. Many offenses may be considered victimless, such as prostitution and drug offenses. They are grossly underreported in this dataset.
+
+__Scope of inference - causality__ 
+
+This data may NOT be used to establish causal links between variables. We need an experimental study in order to establish causation - This study is observational.
+
+# Exploratory data analysis 
+
+_Perform relevant descriptive statistics, including summary statistics and visualization of the data. Also address what the exploratory data analysis suggests about your research question._
+
+
+__Data Prep__
+```{r}
+datacat <- sort(table(data$"Category of Offense"),decreasing = TRUE)
+datacat <- data.frame(datacat[datacat > 5000])
+colnames(datacat) <- c("Category", "Frequency")
+datacat$Percentage <- datacat$Frequency / sum(datacat$Frequency)*100
+
+dataoff <- sort(table(data$Offense),decreasing = TRUE)
+dataoff <- data.frame(dataoff[dataoff > 5000])
+colnames(dataoff) <- c("Offense", "Frequency")
+dataoff$Percentage <- dataoff$Frequency / sum(dataoff$Frequency)*100
+
+ct <- ggplot(datacat, aes(x=Category, y=Frequency, fill=Category)) + geom_bar(stat="identity") + 
+  theme(axis.text.x=element_blank()) + geom_text(data=datacat, aes(label=""))
+
+off <- ggplot(dataoff, aes(x=Offense, y=Frequency, fill=Offense)) + geom_bar(stat="identity") + 
+  theme(axis.text.x=element_blank()) + geom_text(data=dataoff, aes(label=""))
+
+```
+
+__Data Visualization__
+```{r}
+ct
+#describes how the case count(frequency) with respect to the category of the crime being reported.
+
+off
+#describes how the case count(frequency) with respect to the offenses being reported.
+
+plot(dataoff$Frequency ~ dataoff$Offense)
+#describes how the case count(frequency) with respect to the offenses being reported.
+pie <- ggplot(dataoff,
+  aes(x=Offense, y=Frequency, fill=Offense)) +  
+  geom_bar(stat="identity") +
+  coord_polar(theta = "x") +
+  scale_x_discrete("")
+
+pie
+#describes how the case count(frequency) with respect to the offenses being reported.
+```
+
+```{r}
+#The treemap represents the hierarchical crime data in a tree-like structure. Data, organized as branches and sub-branches, is represented using rectangles. This makes the at-a-glance distinguishing between categories and data values easy. 
+
+treemap(data, 
+        index=c("Offense","Category of Offense"),
+        vSize="Precinct", 
+        type="index",
+        fontsize.labels=c(15,12),
+        fontcolor.labels=c("white","orange"),
+        fontface.labels=c(2,1), 
+        bg.labels=c("transparent"),
+        align.labels=list(
+          c("center", "center"), 
+          c("center", "top")
+        ),                                 
+        overlap.labels=0.2,                     
+        inflate.labels=F
+      )
+
+```
+
+
+
+# Conclusions
+
+_Write a brief summary of your findings without repeating your statements from earlier. Also include a discussion of what you have learned about your research question and the data you collected. You may also want to include ideas for possible future research._
+
+The most reported Felonies are Grand Larceny, Felony Assault and Robbery
+
+The treemap indicates the most commonly reported crimes in the Bronx are Harrassment, Petty Larceny and Assault.
+
+__Misdemeanors__ accounted for more than half of all reported crime in the bronx (57%). A Misdemeanor is an offense other than a traffic infraction of which a sentence in excess of 15 days but not greater than one year may be imposed.
+
+Just about half as many __Felonies__ were reported as Misdeameanors (27,194). A Felony is the most serious type of criminal charge In New York State. A felony is an offense for which a sentence to a term of imprisonment in excess of one year may be imposed. 
+
+A __Violation__ is an offense other than a traffic infraction for which a sentence to a term of imprisonment of up to 15 days may be imposed. Many Violations go unreported due to it's low severity. Harrassment is by far the most popular type of violation reported, accounting for over 15% of all crime reported in the Bronx.
+
+Harrasment, Petit Larcency, Assault and Criminal Mischief accord for a vast majority of reported crimes in the Bronx. This is consistent with daily life throughout NYC - I imagine all New Yorkers have witnessed a crime falling into one of these offenses.
+
+Public perception about crime in the Bronx does not align with the data. Crime has been on the decline in New York for the last 10 years, especially in the Bronx. However, peace never makes it to the news so public perception is still quite negative despite the strides being made here in the BX.
+
+
+
+
+
